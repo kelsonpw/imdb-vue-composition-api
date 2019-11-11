@@ -1,28 +1,53 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div class="App">
+    <Header :title="'Composition API'" />
+    <Search :search="state.search" @search="handleSearch" />
+    <p class="App-intro">Sharing a few of our favourite movies</p>
+    <div class="movies">
+      <Movie v-for="movie in state.movies" :movie="movie" :key="movie.imdbID" />
+    </div>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import { reactive, watch } from '@vue/composition-api';
+import Header from './components/Header.vue';
+import Search from './components/Search.vue';
+import Movie from './components/Movie.vue';
+
+const API_KEY = 'a5549d08';
 
 export default {
   name: 'app',
-  components: {
-    HelloWorld
-  }
-}
-</script>
+  components: { Header, Search, Movie },
+  setup() {
+    const state = reactive({
+      search: 'Joker',
+      loading: true,
+      movies: [],
+      errorMessage: null,
+    });
 
-<style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
+    watch(() => {
+      const MOVIE_API_URL = `https://www.omdbapi.com/?s=${state.search}&apikey=${API_KEY}`;
+
+      fetch(MOVIE_API_URL)
+        .then(res => res.json())
+        .then(jsonRes => {
+          state.movies = jsonRes.Search;
+          state.loading = false;
+        });
+    });
+
+    const handleSearch = search => {
+      state.loading = true;
+      state.search = search;
+    };
+
+    return {
+      state,
+      handleSearch,
+    };
+  },
+};
+</script>
